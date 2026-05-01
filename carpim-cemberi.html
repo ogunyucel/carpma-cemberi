@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çarpım Çemberi</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; margin: 0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            touch-action: none; 
+            overflow: hidden;
+        }
+        
+        .container { 
+            background: white; padding: 30px; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: center; width: 90%; max-width: 420px; 
+            position: relative; 
+        }
+
+        h1 { color: #2c3e50; margin-bottom: 10px; font-size: 38px; }
+        p { color: #34495e; font-size: 22px; font-weight: 600; margin-bottom: 25px; }
+        
+        .btn-close {
+            position: absolute; top: 15px; right: 15px; width: 35px; height: 35px;
+            background-color: #ff4d4d; color: white; border: none; border-radius: 50%;
+            cursor: pointer; font-size: 20px; font-weight: bold; display: flex;
+            align-items: center; justify-content: center; transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); padding: 0; line-height: 1; z-index: 100; 
+        }
+        .btn-close:hover { background-color: #ff0000; transform: scale(1.1); }
+        
+        .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;}
+        .btn-level { 
+            background-color: #3498db; color: white; padding: 15px 0; font-size: 26px; 
+            border: none; border-radius: 10px; cursor: pointer; transition: 0.3s; font-weight: bold;
+        }
+        .btn-level:hover { background-color: #2980b9; transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.15);}
+        
+        .hidden { display: none !important; }
+
+        #score-board { 
+            margin-bottom: 20px; margin-top: 35px; background: #f8f9fa; padding: 15px; 
+            padding-right: 50px; border-radius: 15px; display: flex; flex-direction: column;
+            gap: 8px; position: relative; 
+        }
+        
+        /* GÜNCELLEME: Gri alan tıklanabilir oldu, sadece hafif renk değişimi var, büyüme YOK */
+        .clickable-board {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .clickable-board:hover {
+            background-color: #e9ecef !important;
+        }
+        .clickable-board:hover .btn-inspect {
+            color: #3498db;
+        }
+        
+        .main-stats { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        .sub-stats { font-size: 15px; font-weight: bold; display: flex; justify-content: center; gap: 8px; align-items: center;}
+        .stat-correct { color: #27ae60; }
+        .stat-wrong { color: #e74c3c; }
+        .stat-divider { color: #bdc3c7; }
+
+        .btn-inspect {
+            position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+            background: none; border: none; display: flex; flex-direction: column;
+            align-items: center; font-size: 12px; font-weight: bold; color: #2c3e50; transition: 0.2s; padding: 0;
+        }
+        .btn-inspect span { font-size: 24px; margin-bottom: 2px; }
+
+        .table-list {
+            display: flex; justify-content: space-between; gap: 15px;
+            margin-top: 15px; padding: 15px; background: #f8f9fa;
+            border-radius: 15px; border: 2px solid #ecf0f1;
+        }
+        .table-column { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .table-row { font-size: 17px; font-weight: bold; padding-bottom: 5px; border-bottom: 1px dashed #ddd; text-align: left; white-space: nowrap; }
+        .row-correct { color: #27ae60; }
+        .row-wrong { color: #e74c3c; }
+        .row-unanswered { color: #7f8c8d; }
+
+        .btn-mistakes {
+            background-color: #e67e22; color: white; padding: 15px; font-size: 20px;
+            border: none; border-radius: 10px; cursor: pointer; font-weight: bold;
+            width: 100%; margin-top: 15px; transition: 0.3s;
+        }
+        .btn-mistakes:hover { background-color: #d35400; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4); }
+
+        .target-huge { font-size: 55px; font-weight: 900; color: #2c3e50; margin: 15px 0 25px 0; letter-spacing: 2px; }
+
+        .white-circle {
+            position: relative; width: 250px; height: 250px; background-color: #ffffff;
+            border-radius: 50%; margin: 0 auto 10px auto; display: flex;
+            justify-content: center; align-items: center;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05), 0 8px 20px rgba(0,0,0,0.1);
+            border: 3px solid #ecf0f1;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        .center-multiply { font-size: 4rem; color: #bdc3c7; font-weight: 300; pointer-events: none; z-index: 5; }
+
+        #line-svg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+        }
+
+        .num-node {
+            position: absolute; width: 55px; height: 55px; background: #f1f2f6;
+            color: #2c3e50; border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; font-weight: 900; font-size: 1.5rem; cursor: pointer;
+            transition: all 0.2s ease; transform: translate(-50%, -50%);
+            border: 2px solid #ced4da; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            user-select: none; -webkit-user-select: none; z-index: 15;
+        }
+
+        .num-node.selected {
+            background: #f39c12 !important; color: white !important; border-color: #f1c40f !important;
+            transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 15px rgba(243, 156, 18, 0.6);
+        }
+
+        .num-node.correct-selection {
+            background: #27ae60 !important; color: white !important; border-color: #2ecc71 !important;
+            transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 15px rgba(39, 174, 96, 0.6);
+        }
+
+        .num-node.wrong-selection {
+            background: #e74c3c !important; color: white !important; border-color: #c0392b !important;
+            transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
+        }
+
+        #message { height: 30px; font-weight: bold; margin-top: 15px; font-size: 18px; transition: 0.3s; display: flex; justify-content: center; align-items: center; }
+
+    </style>
+</head>
+<body>
+
+<div id="level-screen" class="container">
+    <h1>🌀 Çarpım Çemberi</h1>
+    <p>Seviyeni seç ve oyuna başla!</p>
+    <div class="level-grid" id="levels"></div>
+</div>
+
+<div id="game-screen" class="container hidden">
+    <button class="btn-close" onclick="endGame()">×</button>
+    
+    <!-- GÜNCELLEME: Tüm gri kutu (clickable-board) tıklanabilir hale getirildi -->
+    <div id="score-board" class="clickable-board" onclick="openInspectScreen()">
+        <div class="main-stats">Skor: <span id="score-display">0</span> | Seviye: <span id="level-display">6</span><span id="level-suffix">'lar</span></div>
+        <div class="sub-stats">
+            <span class="stat-correct">✔ Doğru: <span id="count-correct">0</span></span>
+            <span class="stat-divider">|</span>
+            <span class="stat-wrong">✖ Yanlış: <span id="count-wrong">0</span></span>
+        </div>
+        <!-- İncele butonu artık işlevsel olarak div'e dönüştü -->
+        <div class="btn-inspect"><span>🔍</span>İncele</div>
+    </div>
+
+    <div class="target-huge" id="target-display">24</div>
+
+    <div class="white-circle" id="circle-container">
+        <svg id="line-svg">
+            <polyline id="drag-line" fill="none" stroke="#f39c12" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+        </svg>
+        <div class="center-multiply">×</div>
+    </div>
+
+    <p id="message">Sayıları sürükleyerek birleştir!</p>
+</div>
+
+<div id="inspect-screen" class="container hidden">
+    <button class="btn-close" onclick="closeInspectScreen()">×</button>
+    <div id="score-board" style="padding-right: 15px;">
+        <div class="main-stats">Skor: <span id="insp-score">0</span></div>
+        <div class="sub-stats">
+            <span class="stat-correct">✔ Doğru: <span id="insp-correct">0</span></span>
+            <span class="stat-divider">|</span>
+            <span class="stat-wrong">✖ Yanlış: <span id="insp-wrong">0</span></span>
+        </div>
+    </div>
+    <h2 style="color: #2c3e50; margin: 10px 0;"><span id="insp-level-title">6</span><span id="insp-level-suffix">'lar</span> Çarpım Tablosu</h2>
+    <div id="table-list" class="table-list"></div>
+    <button class="btn-mistakes" onclick="startMistakeMode()">Sadece Yanlışlara Çalış</button>
+</div>
+
+<script>
+    let currentLevel = 1;      
+    let currentMultiplier = 1; 
+    let targetResult = 1;      
+
+    let score = 0; let correctCount = 0; let wrongCount = 0;
+    let historyData = {}; 
+    let isMistakeMode = false; let mistakeQueue = []; let fixedMistakesThisSession = 0; 
+
+    // Kaydırma (Swipe) Değişkenleri
+    let isDragging = false;
+    let isChecking = false;
+    let selectedNodes = []; 
+    let selectedValues = [];
+    let points = []; 
+    let currentMousePos = null;
+
+    function showScreen(screenId) {
+        document.getElementById('level-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('inspect-screen').classList.add('hidden');
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    window.onload = () => {
+        const levelsDiv = document.getElementById('levels');
+        for (let i = 1; i <= 9; i++) {
+            let btn = document.createElement('button');
+            btn.innerText = i; btn.className = "btn-level";
+            btn.onclick = () => startLevel(i);
+            levelsDiv.appendChild(btn);
+        }
+
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, {passive: false});
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchend', endDrag);
+    };
+
+    function startLevel(level) {
+        currentLevel = level;
+        document.getElementById('level-display').innerText = level;
+        document.getElementById('level-suffix').innerText = [1, 2, 3, 4, 5, 7, 8].includes(level) ? "'ler" : "'lar";
+        isMistakeMode = false; mistakeQueue = []; score = 0; correctCount = 0; wrongCount = 0; historyData = {}; 
+        updateScoreBoard(); showScreen('game-screen'); generateQuestion();
+    }
+
+    function updateScoreBoard() {
+        document.getElementById('score-display').innerText = score;
+        document.getElementById('count-correct').innerText = correctCount;
+        document.getElementById('count-wrong').innerText = wrongCount;
+    }
+
+    function generateQuestion() {
+        clearSelection();
+        document.getElementById('message').innerText = "Sayıları sürükleyerek birleştir!";
+        document.getElementById('message').style.color = "#34495e";
+        isChecking = false;
+
+        if (isMistakeMode) {
+            currentMultiplier = mistakeQueue[Math.floor(Math.random() * mistakeQueue.length)];
+        } else {
+            currentMultiplier = Math.floor(Math.random() * 10) + 1; 
+        }
+        targetResult = currentLevel * currentMultiplier; 
+        document.getElementById('target-display').innerText = targetResult;
+
+        const container = document.getElementById('circle-container');
+        container.querySelectorAll('.num-node').forEach(n => n.remove());
+
+        let circleNums = [currentLevel, currentMultiplier];
+        let attempt = 0;
+        while(circleNums.length < 4 && attempt < 200) {
+            let rnd = Math.floor(Math.random() * 12) + 1; 
+            if (targetResult % rnd !== 0 && !circleNums.includes(rnd)) circleNums.push(rnd);
+            attempt++;
+        }
+        let extraNum = 13;
+        while(circleNums.length < 4) {
+            if (targetResult % extraNum !== 0 && !circleNums.includes(extraNum)) circleNums.push(extraNum);
+            extraNum++;
+        }
+        circleNums.sort(() => Math.random() - 0.5);
+
+        const radius = 95;
+        circleNums.forEach((num, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'num-node';
+            btn.innerText = num;
+
+            const angle = (i * Math.PI / 2) - (Math.PI / 2); 
+            const x = 125 + radius * Math.cos(angle);
+            const y = 125 + radius * Math.sin(angle);
+
+            btn.style.left = `${x}px`; btn.style.top = `${y}px`;
+
+            btn.addEventListener('mousedown', (e) => startDrag(e, num, btn));
+            btn.addEventListener('touchstart', (e) => startDrag(e, num, btn), {passive: false});
+
+            container.appendChild(btn);
+        });
+    }
+
+    function startDrag(e, num, node) {
+        if (isChecking) return;
+        isDragging = true;
+        document.getElementById('message').innerText = "";
+        addNodeToSelection(num, node);
+    }
+
+    function handleMove(e) {
+        if (!isDragging || isChecking) return;
+        if (e.cancelable) e.preventDefault(); 
+
+        let clientX, clientY;
+        if (e.type.includes('touch')) {
+            clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX; clientY = e.clientY;
+        }
+
+        const containerRect = document.getElementById('circle-container').getBoundingClientRect();
+        currentMousePos = { x: clientX - containerRect.left, y: clientY - containerRect.top };
+
+        const elem = document.elementFromPoint(clientX, clientY);
+        if (elem && elem.classList.contains('num-node')) {
+            const num = parseInt(elem.innerText);
+            if (!selectedNodes.includes(elem) && selectedNodes.length < 2) {
+                addNodeToSelection(num, elem);
+            }
+        }
+        updateLine();
+    }
+
+    function addNodeToSelection(num, node) {
+        selectedNodes.push(node);
+        selectedValues.push(num);
+        node.classList.add('selected');
+
+        const containerRect = document.getElementById('circle-container').getBoundingClientRect();
+        const nodeRect = node.getBoundingClientRect();
+        const x = nodeRect.left + nodeRect.width/2 - containerRect.left;
+        const y = nodeRect.top + nodeRect.height/2 - containerRect.top;
+        points.push(`${x},${y}`);
+
+        updateLine();
+    }
+
+    function updateLine() {
+        const polyline = document.getElementById('drag-line');
+        if (points.length === 0) {
+            polyline.setAttribute('points', ''); return;
+        }
+        let ptsStr = points.join(' ');
+        if (isDragging && selectedNodes.length < 2 && currentMousePos) {
+            ptsStr += ` ${currentMousePos.x},${currentMousePos.y}`;
+        }
+        polyline.setAttribute('points', ptsStr);
+    }
+
+    function endDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        currentMousePos = null;
+        updateLine(); 
+
+        if (selectedValues.length === 2) {
+            checkAnswerAutomatically();
+        } else {
+            clearSelection(); 
+        }
+    }
+
+    function clearSelection() {
+        selectedValues = []; selectedNodes = []; points = []; updateLine();
+        document.getElementById('drag-line').setAttribute('stroke', '#f39c12'); 
+        document.querySelectorAll('.num-node').forEach(n => {
+            n.classList.remove('selected', 'wrong-selection', 'correct-selection');
+        });
+    }
+
+    function checkAnswerAutomatically() {
+        isChecking = true; 
+        const msgBox = document.getElementById('message');
+        const result = selectedValues[0] * selectedValues[1];
+
+        if (result === targetResult) {
+            document.getElementById('drag-line').setAttribute('stroke', '#27ae60');
+            selectedNodes.forEach(n => { 
+                n.classList.remove('selected'); 
+                n.classList.add('correct-selection'); 
+            });
+
+            msgBox.innerText = "Mükemmel! 🎉"; msgBox.style.color = "#27ae60";
+            score += 10; correctCount++; updateScoreBoard(); historyData[currentMultiplier] = 'correct';
+
+            if (isMistakeMode) {
+                mistakeQueue = mistakeQueue.filter(m => m !== currentMultiplier);
+                fixedMistakesThisSession++; 
+                if (mistakeQueue.length === 0) {
+                    setTimeout(() => {
+                        alert("Tebrikler! Tüm yanlışlarını öğrendin. 🎉");
+                        isMistakeMode = false; generateQuestion(); openInspectScreen(); 
+                    }, 1000);
+                    return; 
+                }
+            }
+            setTimeout(() => { generateQuestion(); }, 1000); 
+        } else {
+            document.getElementById('drag-line').setAttribute('stroke', '#e74c3c');
+            selectedNodes.forEach(n => { 
+                n.classList.remove('selected'); 
+                n.classList.add('wrong-selection'); 
+            });
+
+            msgBox.innerText = `Hata! Olması gereken sayılar: ${currentLevel} ve ${currentMultiplier}`;
+            msgBox.style.color = "#c0392b";
+            wrongCount++; updateScoreBoard(); historyData[currentMultiplier] = 'wrong';
+
+            setTimeout(() => { generateQuestion(); }, 1500); 
+        }
+    }
+
+    function endGame() {
+        if (isMistakeMode) {
+            alert(`Tebrikler! ${fixedMistakesThisSession} tane yanlış düzelttiniz.\nKalan düzeltilmesi gereken yanlış sayısı: ${mistakeQueue.length}`);
+            isMistakeMode = false; openInspectScreen(); 
+        } else {
+            if(confirm("Oyunu bitirmek ve seviye seçimine dönmek istiyor musun?")) showScreen('level-screen'); 
+        }
+    }
+
+    function openInspectScreen() {
+        showScreen('inspect-screen');
+        document.getElementById('insp-score').innerText = score;
+        document.getElementById('insp-correct').innerText = correctCount;
+        document.getElementById('insp-wrong').innerText = wrongCount;
+        document.getElementById('insp-level-title').innerText = currentLevel;
+        document.getElementById('insp-level-suffix').innerText = [1, 2, 3, 4, 5, 7, 8].includes(currentLevel) ? "'ler" : "'lar";
+
+        const listDiv = document.getElementById('table-list');
+        listDiv.innerHTML = "";
+        let col1 = document.createElement('div'); col1.className = "table-column";
+        let col2 = document.createElement('div'); col2.className = "table-column";
+
+        for(let i = 1; i <= 10; i++) {
+            let div = document.createElement('div'); div.className = "table-row";
+            let statusHTML = "", rowClass = "row-unanswered";
+
+            if (historyData[i] === 'correct') { statusHTML = "✔ "; rowClass = "row-correct"; } 
+            else if (historyData[i] === 'wrong') { statusHTML = "✖ "; rowClass = "row-wrong"; } 
+            else { statusHTML = "<span style='opacity:0;'>✔ </span>"; }
+
+            div.innerHTML = `<span class="${rowClass}">${statusHTML} ${currentLevel} x ${i} = ${currentLevel * i}</span>`;
+            if (i <= 5) col1.appendChild(div); else col2.appendChild(div);
+        }
+        listDiv.appendChild(col1); listDiv.appendChild(col2);
+    }
+
+    function closeInspectScreen() { showScreen('game-screen'); }
+
+    function startMistakeMode() {
+        mistakeQueue = [];
+        for (let i = 1; i <= 10; i++) if (historyData[i] === 'wrong') mistakeQueue.push(i);
+        if (mistakeQueue.length === 0) { alert("Harika! Hiç yanlışınız yok."); return; }
+        fixedMistakesThisSession = 0; isMistakeMode = true; showScreen('game-screen'); generateQuestion();
+    }
+</script>
+</body>
+</html>
