@@ -116,7 +116,6 @@
         }
         .btn-mistakes:hover { background-color: #d35400; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4); }
 
-        /* YENİ EKLENEN: Dinamik Soru Görünümü (? x ? = 64) */
         .target-container { 
             display: flex; justify-content: center; align-items: center; 
             gap: 10px; margin: 15px 0 25px 0; 
@@ -139,9 +138,9 @@
 
         .center-multiply { font-size: 4rem; color: #bdc3c7; font-weight: 300; pointer-events: none; z-index: 5; }
 
-        /* YENİ EKLENEN: Arka Plan Çarpı İşaretleri */
+        /* GÜNCELLENEN KISIM: Arka Plan Çarpı İşaretleri ortadaki ile aynı renk (#bdc3c7) yapıldı */
         .bg-x { 
-            position: absolute; font-size: 3rem; color: #ecf0f1; font-weight: 300; 
+            position: absolute; font-size: 3rem; color: #bdc3c7; font-weight: 300; 
             pointer-events: none; z-index: 1; transform: translate(-50%, -50%); 
         }
         .tl { top: 25%; left: 25%; }
@@ -206,7 +205,6 @@
         <div class="btn-inspect"><span>🔍</span>İncele</div>
     </div>
 
-    <!-- GÜNCELLEME: ? x ? = [Hedef] Formatı -->
     <div class="target-container">
         <span class="question-box" id="q-box-1">?</span>
         <span class="operator-sign">×</span>
@@ -220,7 +218,6 @@
             <polyline id="drag-line" fill="none" stroke="#f39c12" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
         </svg>
         
-        <!-- Arka Plan İşaretleri -->
         <div class="center-multiply">×</div>
         <div class="bg-x tl">×</div>
         <div class="bg-x tr">×</div>
@@ -312,7 +309,6 @@
         }
         targetResult = currentLevel * currentMultiplier; 
         
-        // Hedef sayıyı güncelle
         document.getElementById('target-display').innerText = targetResult;
 
         const container = document.getElementById('circle-container');
@@ -387,11 +383,10 @@
         selectedValues.push(num);
         node.classList.add('selected');
 
-        // Üstteki Soru İşaretlerini Güncelleme
         if (selectedValues.length === 1) {
             let q1 = document.getElementById('q-box-1');
             q1.innerText = num;
-            q1.style.color = "#2c3e50"; // Seçildiğinde koyu renge dön
+            q1.style.color = "#2c3e50"; 
         } else if (selectedValues.length === 2) {
             let q2 = document.getElementById('q-box-2');
             q2.innerText = num;
@@ -436,7 +431,6 @@
         selectedValues = []; selectedNodes = []; points = []; updateLine();
         document.getElementById('drag-line').setAttribute('stroke', '#f39c12'); 
         
-        // Soru İşaretlerini Sıfırlama
         document.getElementById('q-box-1').innerText = "?";
         document.getElementById('q-box-1').style.color = "#e74c3c";
         document.getElementById('q-box-2').innerText = "?";
