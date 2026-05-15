@@ -24,6 +24,32 @@
         h1 { color: #2c3e50; margin-bottom: 10px; font-size: 38px; }
         p { color: #34495e; font-size: 22px; font-weight: 600; margin-bottom: 25px; }
         
+        /* Ana Giriş Ekranındaki Kırmızı Yönlendirme Butonu */
+        .btn-redirect {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            background-color: #ff4d4d;
+            color: white;
+            text-decoration: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 101;
+        }
+
+        .btn-redirect:hover {
+            background-color: #ff0000;
+            transform: scale(1.1);
+        }
+
         .btn-close {
             position: absolute; top: 15px; right: 15px; width: 35px; height: 35px;
             background-color: #ff4d4d; color: white; border: none; border-radius: 50%;
@@ -48,7 +74,6 @@
             gap: 8px; position: relative; 
         }
         
-        /* GÜNCELLEME: Gri alan tıklanabilir oldu, sadece hafif renk değişimi var, büyüme YOK */
         .clickable-board {
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -91,7 +116,17 @@
         }
         .btn-mistakes:hover { background-color: #d35400; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4); }
 
-        .target-huge { font-size: 55px; font-weight: 900; color: #2c3e50; margin: 15px 0 25px 0; letter-spacing: 2px; }
+        /* YENİ EKLENEN: Dinamik Soru Görünümü (? x ? = 64) */
+        .target-container { 
+            display: flex; justify-content: center; align-items: center; 
+            gap: 10px; margin: 15px 0 25px 0; 
+        }
+        .question-box { 
+            color: #e74c3c; font-size: 45px; font-weight: 900; 
+            min-width: 35px; text-align: center; transition: color 0.2s;
+        }
+        .operator-sign { color: #bdc3c7; font-size: 40px; font-weight: bold; }
+        .target-huge { font-size: 55px; font-weight: 900; color: #2c3e50; margin: 0; }
 
         .white-circle {
             position: relative; width: 250px; height: 250px; background-color: #ffffff;
@@ -103,6 +138,16 @@
         }
 
         .center-multiply { font-size: 4rem; color: #bdc3c7; font-weight: 300; pointer-events: none; z-index: 5; }
+
+        /* YENİ EKLENEN: Arka Plan Çarpı İşaretleri */
+        .bg-x { 
+            position: absolute; font-size: 3rem; color: #ecf0f1; font-weight: 300; 
+            pointer-events: none; z-index: 1; transform: translate(-50%, -50%); 
+        }
+        .tl { top: 25%; left: 25%; }
+        .tr { top: 25%; left: 75%; }
+        .bl { top: 75%; left: 25%; }
+        .br { top: 75%; left: 75%; }
 
         #line-svg {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -140,6 +185,9 @@
 <body>
 
 <div id="level-screen" class="container">
+    
+    <a href="https://matfabe.com/oyunlar/" class="btn-redirect">×</a> 
+    
     <h1>🌀 Çarpım Çemberi</h1>
     <p>Seviyeni seç ve oyuna başla!</p>
     <div class="level-grid" id="levels"></div>
@@ -148,7 +196,6 @@
 <div id="game-screen" class="container hidden">
     <button class="btn-close" onclick="endGame()">×</button>
     
-    <!-- GÜNCELLEME: Tüm gri kutu (clickable-board) tıklanabilir hale getirildi -->
     <div id="score-board" class="clickable-board" onclick="openInspectScreen()">
         <div class="main-stats">Skor: <span id="score-display">0</span> | Seviye: <span id="level-display">6</span><span id="level-suffix">'lar</span></div>
         <div class="sub-stats">
@@ -156,17 +203,29 @@
             <span class="stat-divider">|</span>
             <span class="stat-wrong">✖ Yanlış: <span id="count-wrong">0</span></span>
         </div>
-        <!-- İncele butonu artık işlevsel olarak div'e dönüştü -->
         <div class="btn-inspect"><span>🔍</span>İncele</div>
     </div>
 
-    <div class="target-huge" id="target-display">24</div>
+    <!-- GÜNCELLEME: ? x ? = [Hedef] Formatı -->
+    <div class="target-container">
+        <span class="question-box" id="q-box-1">?</span>
+        <span class="operator-sign">×</span>
+        <span class="question-box" id="q-box-2">?</span>
+        <span class="operator-sign">=</span>
+        <span class="target-huge" id="target-display">24</span>
+    </div>
 
     <div class="white-circle" id="circle-container">
         <svg id="line-svg">
             <polyline id="drag-line" fill="none" stroke="#f39c12" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
         </svg>
+        
+        <!-- Arka Plan İşaretleri -->
         <div class="center-multiply">×</div>
+        <div class="bg-x tl">×</div>
+        <div class="bg-x tr">×</div>
+        <div class="bg-x bl">×</div>
+        <div class="bg-x br">×</div>
     </div>
 
     <p id="message">Sayıları sürükleyerek birleştir!</p>
@@ -252,6 +311,8 @@
             currentMultiplier = Math.floor(Math.random() * 10) + 1; 
         }
         targetResult = currentLevel * currentMultiplier; 
+        
+        // Hedef sayıyı güncelle
         document.getElementById('target-display').innerText = targetResult;
 
         const container = document.getElementById('circle-container');
@@ -326,6 +387,17 @@
         selectedValues.push(num);
         node.classList.add('selected');
 
+        // Üstteki Soru İşaretlerini Güncelleme
+        if (selectedValues.length === 1) {
+            let q1 = document.getElementById('q-box-1');
+            q1.innerText = num;
+            q1.style.color = "#2c3e50"; // Seçildiğinde koyu renge dön
+        } else if (selectedValues.length === 2) {
+            let q2 = document.getElementById('q-box-2');
+            q2.innerText = num;
+            q2.style.color = "#2c3e50";
+        }
+
         const containerRect = document.getElementById('circle-container').getBoundingClientRect();
         const nodeRect = node.getBoundingClientRect();
         const x = nodeRect.left + nodeRect.width/2 - containerRect.left;
@@ -363,6 +435,13 @@
     function clearSelection() {
         selectedValues = []; selectedNodes = []; points = []; updateLine();
         document.getElementById('drag-line').setAttribute('stroke', '#f39c12'); 
+        
+        // Soru İşaretlerini Sıfırlama
+        document.getElementById('q-box-1').innerText = "?";
+        document.getElementById('q-box-1').style.color = "#e74c3c";
+        document.getElementById('q-box-2').innerText = "?";
+        document.getElementById('q-box-2').style.color = "#e74c3c";
+
         document.querySelectorAll('.num-node').forEach(n => {
             n.classList.remove('selected', 'wrong-selection', 'correct-selection');
         });
